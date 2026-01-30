@@ -424,6 +424,12 @@ async fn handle_json_rpc_request(
             .list_descriptors()
             .map(|v| serde_json::to_value(v).unwrap()),
 
+        "verifyutxochaintipinclusionproof" => {
+            let proof = get_string(&params, 0, "proof")?;
+            let verbosity: u32 =
+                get_optional_field(&params, 1, "verbosity", get_numeric)?.unwrap_or(0);
+            state.verify_utxo_chain_tip_inclusion_proof(&proof, verbosity)
+        }
         _ => {
             let error = JsonRpcError::MethodNotFound;
             Err(error)
@@ -453,6 +459,7 @@ fn get_http_error_code(err: &JsonRpcError) -> u16 {
         | JsonRpcError::MissingParameter(_)
         | JsonRpcError::ChainWorkOverflow
         | JsonRpcError::MempoolAccept(_)
+        | JsonRpcError::InvalidProof(_)
         | JsonRpcError::Wallet(_) => 400,
 
         // idunnolol
@@ -493,6 +500,7 @@ fn get_json_rpc_error_code(err: &JsonRpcError) -> i32 {
         | JsonRpcError::NoAddressesToRescan
         | JsonRpcError::ChainWorkOverflow
         | JsonRpcError::Wallet(_)
+        | JsonRpcError::InvalidProof(_)
         | JsonRpcError::MempoolAccept(_) => -32600,
 
         // server error
